@@ -5,17 +5,14 @@
 using namespace std;
 typedef unsigned int uint;
 
-/* declare types as you need */
-
 class BlockHeader
 {
 public:
     BlockHeader (): blockSize(0), free(true), next(nullptr)
     {}
     
-    // think about what else should be included as member variables
     int blockSize;    // size of the block
-    bool free;
+    bool free; // flag for whether the BlockHeader is free
     BlockHeader *next; // pointer to the next block
 };
 
@@ -83,16 +80,13 @@ public:
 class BuddyAllocator
 {
 private:
-    /* declare more member variables as necessary */
-    vector<LinkedList> FreeList;
+
+    vector<LinkedList> FreeList; // contains a list of free blocks at each level
     char *memoryStart; // address where the memory starts
     int basic_block_size;
     int total_memory_size;
     
 private:
-    /* private function you are required to implement
-     this will allow you and us to do unit test */
-    
     int calculateFreeListIndex (int memorySize);
     // given the memorySize to be allocated, returns the correct index of the FreeList
     // depending on which level can contain it

@@ -1,12 +1,14 @@
 #include <unistd.h>
 #include <stdlib.h>
+#include <math.h>
 #include "Ackerman.h"
 #include "BuddyAllocator.h"
 
 void easytest(BuddyAllocator *ba)
 {
-    // be creative here
-    // know what to expect after every allocation/deallocation cycle
+    // Test 4 differently sized allocations
+    // And free in 2 steps
+    // Also print list after every step
     
     cout << "******** BEGIN EASY TEST ********" << endl << endl;
     cout << "**** No allocations ****" << endl << endl;
@@ -57,11 +59,18 @@ void easytest(BuddyAllocator *ba)
     ba->printlist(); // shouldn't the list now look like as in the beginning
 }
 
+// Helper function to check if given number is a power of 2
+bool isPowerOfTwo (int toCheck)
+{
+    if (toCheck <= 0)
+        return false;
+    return (ceil(log2(toCheck)) == floor(log2(toCheck)));
+}
+
 int main(int argc, char **argv)
 {
-    // Parse the command line arguments using getopt
     // Set default values (128 bytes, and 512 KB)
-    int basicBlockSize = 128, memoryLength = 128 * 1024 * 1024;
+    int basicBlockSize = 128, memoryLength = 512 * 1024;
 
     // Parse arguments
     try
@@ -79,13 +88,26 @@ int main(int argc, char **argv)
         cout << "Improper argument usage" << endl;
     }
     
+    // Make sure arguments are valid
+    if (!isPowerOfTwo(basicBlockSize) or (basicBlockSize > memoryLength))
+    {
+        cout << "Basic Block Size is invalid. It must be a positive power of 2 and smaller than total memory size." << endl;
+        return -1;
+    }
+        
+    if (!isPowerOfTwo(memoryLength))
+    {
+        cout << "Total Memory Size is invalid. It must be a positive power of 2 and a multiple of basic block size." << endl;
+        return -1;
+    }
+    
     // create memory manager
     BuddyAllocator *allocator = new BuddyAllocator(basicBlockSize, memoryLength);
     
-    // the following won't print anything until you start using FreeList and replace the "new" with your own implementation
-    //easytest(allocator);
+    // Simple user-written test for the allocator
+    easytest(allocator);
     
-    // stress-test the memory manager, do this only after you are done with small test cases
+    // stress-test the memory manager
     Ackerman *am = new Ackerman();
     am->test(allocator); // this is the full-fledged test.
     

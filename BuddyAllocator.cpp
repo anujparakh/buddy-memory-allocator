@@ -46,34 +46,15 @@ BuddyAllocator::~BuddyAllocator()
 
 char *BuddyAllocator::alloc(int _length)
 {
-    /* This preliminary implementation simply hands the call over the
-     the C standard library!
-     Of course this needs to be replaced by your implementation.
-     */
-    
-    // FROM LECTURE
-    // int rx = x + sizeof(BH)
-    // int i = some func(rx, basic block size)
-    // if (FL [i].head != NULL) -> then a block exists
-    //   BH * b = FL [i].remove_head();
-    //   return (char *)(b + 1);
-    // else
-    //   // Keep going down until you find FL[j] head != NULL
-    //   j++;
-    //   if (j >= FL.size()) return 0/NULL; -> issa full
-    //   while (j > i)
-    //      b = FL[j].head
-    //      BH *buddyblock = split (b)
-    //      // when you split a block, just put another header in the middle
-    //      FL[j].remove(b);
-    //      FL[j-1].insert(bb);
-    //      // when j = i, then buddy block is small enough
-    
+    // Try catch block to catch stupid exceptions
+    // Note: This does not catch BAD_ACCESS and Segmentation Faults
     try
     {
+        // Find the level in FreeList needed
         int levelInFreeList = calculateFreeListIndex(_length + sizeof(BlockHeader));
         
-        if (FreeList[levelInFreeList].head) // free block of needed size exists
+        // Check if free block of needed size exist already
+        if (FreeList[levelInFreeList].head)
         {
             BlockHeader *toReturn = FreeList[levelInFreeList].head;
             toReturn->free = false;
@@ -120,30 +101,15 @@ char *BuddyAllocator::alloc(int _length)
     }
     catch (const std::exception& e)
     {
-        cout << "Exception Occured in Alloc: " << endl;
+        cout << "Exception Occured in Alloc: " << e.what() << endl;
         return nullptr;
     }
-    //    return new char[_length];
 }
 
 int BuddyAllocator::free(char *_a)
 {
-    // BH *b = addr - sizeof(BH)
-    // int i = some func(b->bs, bbs)
-    // BH *bb = buddyaddress (b) -> calculates buddy of a given block
-    // // if buddy is free, merge them together and put them in the linked list
-    // while (true)
-    // if (isfree (bb)) -> use free bit in block header
-    //    BH *m merge (b, bb) -> opposite of split and returns smaller address i.e. whatever is first
-    //    FL[i+1].insert(m)
-    // else
-    //    FL[i].insert(b)
-    //    break;
-    
-    // BH *buddyaddr (BA *b):
-    //    NOTE: Use 64-byte integer (long should be good or uint64_t)
-    //    return ( (address - start) ^ bs) + start // XOR with the size gives you the next block
-    
+    // Try catch block to catch stupid exceptions
+    // Note: This does not catch BAD_ACCESS and Segmentation Faults
     try
     {
         // Try to create a blockHeader from the given block
@@ -155,8 +121,10 @@ int BuddyAllocator::free(char *_a)
         // insert the block back into the freeList
         FreeList[levelInFreeList].insert(toDelete);
 
+        // while loop to merge blocks over and over again
         while (true)
         {
+            // If the buddy is not free or it is already splitted, you're done
             if (!toDeleteBuddy->free or (toDelete->blockSize != toDeleteBuddy->blockSize))
             {
                 return 0;
@@ -165,7 +133,7 @@ int BuddyAllocator::free(char *_a)
             // Merge the two blocks
             // They will get removed from FreeList by merge
             BlockHeader *mergedResult = merge(toDelete, toDeleteBuddy);
-            
+            // Add the merged block back to the FreeList
             FreeList [levelInFreeList + 1].insert(mergedResult);
             
             if (mergedResult->blockSize == total_memory_size) // reached highest level
@@ -177,18 +145,16 @@ int BuddyAllocator::free(char *_a)
             ++levelInFreeList;
         }
     }
-    catch (...)
+    catch (const std::exception& e)
     {
-        cout << "Exception Occured in Free: " <<  endl;
+        cout << "Exception Occured in Free: " << e.what() <<  endl;
         return -1;
     }
     
     return 0;
 }
 
-
-
-
+// Given function for printing the freelist
 void BuddyAllocator::printlist()
 {
     cout << "Printing the Freelist in the format \"[index] (block size) : # of blocks\"" << endl;
@@ -218,6 +184,7 @@ void BuddyAllocator::printlist()
 // PRIVATE FUNCTIONS
 //
 
+// Helper function to calculate index needed in FreeList
 int BuddyAllocator::calculateFreeListIndex (int memorySize)
 {
     // If memory is bigger than total memory, CAN'T DO IT
@@ -227,6 +194,7 @@ int BuddyAllocator::calculateFreeListIndex (int memorySize)
     if (memorySize < basic_block_size)
         return 0;
     
+    // equation holds true for index > 0
     return ceil (log(memorySize)/log(2) - log(basic_block_size) / log(2));
     
 }
@@ -238,7 +206,7 @@ BlockHeader * BuddyAllocator::getbuddy(BlockHeader *block)
     if (block->blockSize == total_memory_size)
         return nullptr;
     
-    // save address of block and start of allocated memory in uintptr_ts
+    // save address of block and start of allocated memory in 'uintptr_t's
     uintptr_t addr = (uintptr_t) block;
     uintptr_t start = (uintptr_t) memoryStart;
     // calculate address of budy using XOR and recast it as BlockHeader
@@ -256,10 +224,6 @@ bool BuddyAllocator::arebuddies(BlockHeader *block1, BlockHeader *block2)
 // Helper function to merge 2 given blocks into a bigger block
 BlockHeader * BuddyAllocator::merge(BlockHeader *block1, BlockHeader *block2)
 {
-    // Make sure blocks are free and of equal size
-//    if (!(block1->free and block2->free and block1->blockSize == block2->blockSize))
-//        return nullptr;
-    
     // If block2 is before block1, swap them
     if (uintptr_t(block1) > uintptr_t(block2))
     {
@@ -275,9 +239,6 @@ BlockHeader * BuddyAllocator::merge(BlockHeader *block1, BlockHeader *block2)
     // Create the merged block header
     block1->blockSize = block1->blockSize << 1;
     
-    // Empty the given block headers
-//    memset ((mergedBlock + 1), NULL, mergedBlock->blockSize - sizeof(BlockHeader));
-    
     return block1;
 }
 
@@ -285,7 +246,7 @@ BlockHeader * BuddyAllocator::merge(BlockHeader *block1, BlockHeader *block2)
 BlockHeader * BuddyAllocator::split(BlockHeader *block)
 {
     // Make sure the given block is free
-    // If not, can't split it
+    // If not, can't split it (IDEALLY this should never happen)
     if (!block->free)
         return nullptr;
     
