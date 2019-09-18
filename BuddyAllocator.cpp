@@ -62,13 +62,17 @@ char *BuddyAllocator::alloc(int _length)
             return (char*) (toReturn + 1);
         }
         
+        if (levelInFreeList == FreeList.size() - 1)
+            return nullptr; // can't split the biggest block if that's what we need
+        
+        
         // Look for an empty block bigger than the block we need
         // start looking at 1 level above the level we need
         int indexFreeList = levelInFreeList + 1;
         while (!FreeList[indexFreeList].head)
         {
             ++indexFreeList;
-            if (indexFreeList == FreeList.size())
+            if (indexFreeList >= FreeList.size())
                 return nullptr; // No memory unavailable
         }
         
