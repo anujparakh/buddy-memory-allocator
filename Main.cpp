@@ -1,6 +1,8 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <math.h>
+#include<string.h>
+#include <cstring>
 #include "Ackerman.h"
 #include "BuddyAllocator.h"
 
@@ -15,8 +17,13 @@ void easytest(BuddyAllocator *ba)
     ba->printlist();
     cout << endl << endl;
     
-    char *mem1 = ba->alloc(52);
     cout << "**** Allocating 52 bytes (mem1) ****" << endl << endl;
+    char *mem1 = ba->alloc(52);
+    if (!mem1)
+    {
+        return;
+    }
+    
     memset(mem1, 'c', 52);
     ba->printlist();
     cout << endl << endl;
@@ -24,6 +31,10 @@ void easytest(BuddyAllocator *ba)
     cout << "**** Allocating 234 bytes (mem2) ****" << endl << endl;
 
     char *mem2 = ba->alloc(234);
+    if (!mem2)
+    {
+        return;
+    }
     memset(mem2, 'c', 234);
 
     ba->printlist();
@@ -31,6 +42,10 @@ void easytest(BuddyAllocator *ba)
 
     cout << "**** Allocating 400 bytes (mem3) ****" << endl << endl;
     char *mem3 = ba->alloc(400);
+    if (!mem3)
+    {
+        return;
+    }
     memset(mem3, 'c', 400);
 
     ba->printlist();
@@ -38,6 +53,10 @@ void easytest(BuddyAllocator *ba)
     
     cout << "**** Allocating 400 bytes (mem4) ****" << endl << endl;
     char *mem4 = ba->alloc(400);
+    if (!mem4)
+    {
+        return;
+    }
     memset(mem4, 'c', 400);
 
     // now print again, how should the list look now
@@ -62,6 +81,7 @@ void easytest(BuddyAllocator *ba)
 // Helper function to check if given number is a power of 2
 bool isPowerOfTwo (int toCheck)
 {
+    // Negative numbers and 0 not allowed :)
     if (toCheck <= 0)
         return false;
     return (ceil(log2(toCheck)) == floor(log2(toCheck)));
@@ -73,21 +93,35 @@ int main(int argc, char **argv)
     int basicBlockSize = 128, memoryLength = 512 * 1024;
 
     // Parse arguments
+    // To use for argument
+    int opt;
+    
     try
     {
-        for (int argNum = 1; argNum < argc; ++argNum)
+        while((opt = getopt(argc, argv, "b:s:")) != -1)
         {
-            if (strcmp(argv[argNum], "-b") == 0)
-                basicBlockSize = atoi(argv[++argNum]);
-            else if(strcmp(argv[argNum], "-s") == 0)
-                memoryLength = atoi(argv[++argNum]);
+            switch(opt)
+            {
+                case 'b':
+                    basicBlockSize = atoi(optarg);
+                    break;
+                case 's':
+                    memoryLength = atoi(optarg);
+                    break;
+                default:
+                    cout << "Improper Argument Usage." << endl;
+                    return 0;
+            }
         }
     }
-    catch (const std::exception& e)
+    catch (const std::exception &e)
     {
-        cout << "Improper argument usage" << endl;
+        cout << "Problem reading arguments. Error: " << e.what() << endl;
     }
     
+    cout << "basic block size = " << basicBlockSize << " bytes." << endl;
+    cout << "total memory = " << memoryLength  << " bytes." << endl;
+
     // Make sure arguments are valid
     if (!isPowerOfTwo(basicBlockSize) or (basicBlockSize > memoryLength))
     {

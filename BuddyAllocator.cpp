@@ -46,6 +46,11 @@ BuddyAllocator::~BuddyAllocator()
 
 char *BuddyAllocator::alloc(int _length)
 {
+    if (_length <= 0)
+    {
+        cout << "Memory must be more than 0!" << endl;
+        return nullptr;
+    }
     // Try catch block to catch stupid exceptions
     // Note: This does not catch BAD_ACCESS and Segmentation Faults
     try
@@ -63,7 +68,10 @@ char *BuddyAllocator::alloc(int _length)
         }
         
         if (levelInFreeList == FreeList.size() - 1)
+        {
+            cout << "MEMORY FULL! CAN'T ALLOCATE" << endl;
             return nullptr; // can't split the biggest block if that's what we need
+        }
         
         
         // Look for an empty block bigger than the block we need
@@ -73,7 +81,10 @@ char *BuddyAllocator::alloc(int _length)
         {
             ++indexFreeList;
             if (indexFreeList >= FreeList.size())
+            {
+                cout << "MEMORY FULL! CAN'T ALLOCATE" << endl;
                 return nullptr; // No memory unavailable
+            }
         }
         
         // Now we have found a free block
@@ -264,6 +275,5 @@ BlockHeader * BuddyAllocator::split(BlockHeader *block)
     // assign the block
     newBlock->blockSize = block->blockSize;
     newBlock->free = true;
-    
     return newBlock;
 }
